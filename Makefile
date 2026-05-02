@@ -1,4 +1,4 @@
-.PHONY: build run test clean install
+.PHONY: build run run-bin stop test clean install
 
 BINARY_NAME=rust-agent-tool
 
@@ -7,6 +7,13 @@ build:
 
 run:
 	cargo run --release
+
+run-bin:
+	./target/release/$(BINARY_NAME)
+
+stop:
+	@echo "🛑 Stopping $(BINARY_NAME)..."
+	@pkill -f $(BINARY_NAME) || echo "⚠️  Process not found."
 
 test:
 	cargo test

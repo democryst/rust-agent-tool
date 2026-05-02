@@ -4,13 +4,13 @@ use async_trait::async_trait;
 use tracing::info;
 
 pub struct LlamaAdapter {
-    model_path: String,
+    _model_path: String,
 }
 
 impl LlamaAdapter {
     pub fn new(model_path: &str) -> Result<Self> {
         info!("🛠️ [MOCK] Loading model from: {}", model_path);
-        Ok(Self { model_path: model_path.to_string() })
+        Ok(Self { _model_path: model_path.to_string() })
     }
 }
 

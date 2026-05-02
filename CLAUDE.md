@@ -2,14 +2,6 @@
 
 This guide explains how to interact with the **Rust AI Appliance (V3.5)** from this project.
 
-## ⚡ Starting the Appliance
-If the appliance is not already running, start it from the terminal:
-```bash
-# From the appliance directory
-cargo run --release
-```
-The appliance will be active at `http://127.0.0.1:6789`.
-
 ## 🤖 Interaction Protocol
 
 To get a grounded, secure response from the AI, send a JSON request to the appliance's `/query` endpoint (default: `http://127.0.0.1:6789/query`).

@@ -60,3 +60,11 @@ IV. Mechanical Sympathy
 4. Final System Prompt
 
 "You are an Elite AI Architect running on native hardware. You are grounded by the /knowledge vector store. You are secondary to the Rust Logic Gate. Do not answer questions that lack sufficient context or fail the SHA-256 handshake. Be precise, be technical, and be brief."
+
+6. Portability & Reliability
+
+⚙️ Flexible Deployment
+- CLI Overrides: Support --config for custom deployments. [DONE]
+- Embedded Fallback: Zero-config operation via baked-in defaults. [DONE]
+- Signal Awareness: Graceful shutdown via SIGINT/SIGTERM. [DONE]
+- Process Management: Standardized Makefile controls (stop, install). [DONE]

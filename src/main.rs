@@ -13,10 +13,24 @@ use rust_agent_tool::ports::Orchestrator;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::{info, warn};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
+use std::path::{Path, PathBuf};
+use clap::Parser;
+use tokio::signal;
+
+const DEFAULT_CONFIG: &str = include_str!("../appliance.toml");
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path to the configuration file (optional, will use embedded default if missing)
+    #[arg(short, long)]
+    config: Option<PathBuf>,
+}
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct ApplianceConfig {
     knowledge_path: String,
     models_path: String,
@@ -25,11 +39,26 @@ struct ApplianceConfig {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct ServerConfig {
     port: u16,
     host: String,
 }
 
+#[derive(Deserialize)]
+#[allow(dead_code)]
+struct QueryRequest {
+    query: String,
+    signature: Option<String>,
+}
+
+#[derive(Serialize)]
+#[allow(dead_code)]
+struct QueryResponse {
+    response: String,
+}
+
+#[allow(dead_code)]
 struct AppState {
     orchestrator: Arc<dyn Orchestrator>,
 }
@@ -38,11 +67,22 @@ struct AppState {
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
+    let args = Args::parse();
     info!("🚀 Initializing Rust AI Appliance (V3.5)...");
 
-    // 0. Load Configuration
-    let config_content = fs::read_to_string("appliance.toml")?;
-    let config: ApplianceConfig = toml::from_str(&config_content)?;
+    // 0. Resolve Configuration
+    let config: ApplianceConfig = if let Some(path) = args.config {
+        info!("📖 Loading external config from: {:?}", path);
+        let content = fs::read_to_string(&path)?;
+        toml::from_str(&content)?
+    } else if Path::new("appliance.toml").exists() {
+        info!("📖 Loading local appliance.toml...");
+        let content = fs::read_to_string("appliance.toml")?;
+        toml::from_str(&content)?
+    } else {
+        info!("📦 Using embedded default configuration.");
+        toml::from_str(DEFAULT_CONFIG)?
+    };
 
     // 1. Setup Infrastructure
     let embedder = Arc::new(FastEmbedder::new()?);
@@ -78,18 +118,24 @@ async fn main() -> anyhow::Result<()> {
     // 4. Sample Interaction (Simulated)
     tokio::spawn(async move {
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-        
-        // This query will fail grounding verification because the response won't have citations
         let query = "Explain how the gatekeeper works.";
-        info!("💬 User Query: \"{}\"", query);
-        
         match orchestrator.process_query(query.to_string(), None).await {
             Ok(response) => info!("🤖 Response:\n{}", response),
             Err(e) => warn!("❌ Error: {:?}", e),
         }
     });
 
-    // 5. Setup HTTP Server
-    // ... (rest of main)
+    // 5. Graceful Shutdown
+    info!("🛎️  Press Ctrl+C to terminate the appliance.");
+    
+    match signal::ctrl_c().await {
+        Ok(()) => {
+            info!("🛑 Termination signal received. Shutting down gracefully...");
+        }
+        Err(err) => {
+            warn!("❌ Unable to listen for shutdown signal: {}", err);
+        }
+    }
+
     Ok(())
 }

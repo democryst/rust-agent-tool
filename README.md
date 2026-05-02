@@ -28,7 +28,8 @@ make download-model
 Build the release binary and start the appliance:
 ```bash
 make build
-make run
+make build
+make run-bin # Or run with custom config: ./target/release/rust-agent-tool --config path/to/appliance.toml
 ```
 The appliance will now be listening at `http://127.0.0.1:6789`.
 
@@ -73,3 +74,36 @@ The appliance enforces a two-way gate:
 ---
 
 > "Efficiency is a Moral Obligation. The Rust logic gate is the law; the LLM is merely the worker."
+
+---
+
+## 🛑 Process Management
+
+### Graceful Shutdown
+The appliance listens for termination signals. You can shut it down cleanly by pressing **Ctrl+C** in the terminal where it is running.
+
+### Force Kill / Manual Stop
+If you need to stop the appliance from another terminal or force-kill it:
+
+1. **Using Makefile**:
+   ```bash
+   make stop
+   ```
+
+2. **Using ps & kill**:
+   Find the Process ID (PID) and kill it:
+   ```bash
+   # Find the process
+   ps aux | grep rust-agent-tool
+   
+   # Kill it gently
+   kill <PID>
+   
+   # Force kill if stuck
+   kill -9 <PID>
+   ```
+
+3. **Using pkill**:
+   ```bash
+   pkill -f rust-agent-tool
+   ```

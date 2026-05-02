@@ -27,7 +27,13 @@ This is the final "Guardian" layer that vets the AI's response:
 - **Grounding Verification**: Rejects responses that make technical claims without citing source chunks.
 - **Evidence-Based Completion**: If the AI says it is "Done," the appliance automatically runs `cargo check`. If the build fails, the response is rejected and replaced with the compiler error.
 
-## 5. Operations & Costs
+## 5. Portability & Reliability
+The appliance is designed for resilient deployment across different environments:
+- **Zero-Config Fallback**: If no `appliance.toml` is found, the binary uses an embedded default configuration.
+- **CLI Overrides**: Use `--config` to point to a specific settings file.
+- **Graceful Shutdown**: The appliance listens for `Ctrl+C` (SIGINT) to ensure all HNSW indices and logs are flushed to disk before exiting.
+
+## 6. Operations & Costs
 - **Port**: The appliance defaults to **`6789`**.
 - **Burn Rate Audit**: Real-time USD costing is calculated using `rates.toml`.
 - **Management**: Use the `Makefile` for setup, building, and downloading models.
