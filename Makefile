@@ -28,6 +28,6 @@ download-model:
 setup:
 	mkdir -p knowledge models
 	@if [ ! -f appliance.toml ]; then \
-		echo 'knowledge_path = "./knowledge"\nmodels_path = "./models"\nrates_path = "rates.toml"\n\n[server]\nport = 8080\nhost = "127.0.0.1"' > appliance.toml; \
+		echo 'knowledge_path = "./knowledge"\nmodels_path = "./models"\nrates_path = "rates.toml"\n\n[server]\nport = 6789\nhost = "127.0.0.1"' > appliance.toml; \
 	fi
 	@echo "✅ Environment setup complete."
