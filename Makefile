@@ -29,7 +29,7 @@ install: build
 # Helper to download the recommended model
 download-model:
 	mkdir -p models
-	curl -L https://huggingface.co/lmstudio-community/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-e4b-it-Q4_K_M.gguf -o models/gemma-4-e4b.gguf
+	curl -L https://huggingface.co/lmstudio-community/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf -o models/gemma-4-e4b.gguf
 	@echo "✅ Gemma 4 e4b downloaded to ./models"
 
 setup:

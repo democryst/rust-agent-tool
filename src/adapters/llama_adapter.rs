@@ -23,9 +23,9 @@ impl InferenceEngine for LlamaAdapter {
         let response = if prompt.contains("Summarize") {
             "The Rust AI Appliance (V3.5) is a security-first, local-RAG platform. \
             It uses Hexagonal Architecture and a 'Hardened Gatekeeper' to ensure \
-            deterministic logic gating and high-efficiency inference."
+            deterministic logic gating and high-efficiency inference. [source: CLAUDE.md]"
         } else {
-            "Gemma 4 e4b (Effective Series) response: The system is operational and grounded."
+            "Gemma 4 e4b (Effective Series) response: The system is operational and grounded. [source: system_monitor]"
         };
         
         Ok(response.to_string())

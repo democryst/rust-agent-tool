@@ -15,10 +15,15 @@ use tokio::sync::mpsc;
 use tracing::{info, warn};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use anyhow::{Context, Result};
+use anyhow::Context;
 use std::path::{Path, PathBuf};
 use clap::Parser;
 use tokio::signal;
+use axum::{
+    routing::post,
+    Json, Router, extract::State,
+};
+use std::net::SocketAddr;
 
 const DEFAULT_CONFIG: &str = include_str!("../appliance.toml");
 
@@ -62,6 +67,16 @@ struct QueryResponse {
 #[allow(dead_code)]
 struct AppState {
     orchestrator: Arc<dyn Orchestrator>,
+}
+
+async fn handle_query(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<QueryRequest>,
+) -> Json<QueryResponse> {
+    info!("📩 Received query: {}", payload.query);
+    let response = state.orchestrator.process_query(payload.query, payload.signature).await
+        .unwrap_or_else(|e| format!("❌ Error: {:?}", e));
+    Json(QueryResponse { response })
 }
 
 #[tokio::main]
@@ -122,26 +137,39 @@ async fn main() -> anyhow::Result<()> {
     info!("📂 Watching knowledge directory: {}", config.knowledge_path);
 
     // 4. Sample Interaction (Simulated)
+    let orchestrator_clone = orchestrator.clone();
     tokio::spawn(async move {
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
         let query = "Explain how the gatekeeper works.";
-        match orchestrator.process_query(query.to_string(), None).await {
+        match orchestrator_clone.process_query(query.to_string(), None).await {
             Ok(response) => info!("🤖 Response:\n{}", response),
             Err(e) => warn!("❌ Error: {:?}", e),
         }
     });
 
-    // 5. Graceful Shutdown
-    info!("🛎️  Press Ctrl+C to terminate the appliance.");
+    // 5. Start HTTP Server
+    let app_state = Arc::new(AppState { orchestrator });
+
+    let app = Router::new()
+        .route("/query", post(handle_query))
+        .with_state(app_state);
+
+    let addr: SocketAddr = format!("{}:{}", config.server.host, config.server.port)
+        .parse()
+        .context("Failed to parse server address")?;
     
-    match signal::ctrl_c().await {
-        Ok(()) => {
-            info!("🛑 Termination signal received. Shutting down gracefully...");
-        }
-        Err(err) => {
-            warn!("❌ Unable to listen for shutdown signal: {}", err);
-        }
-    }
+    let listener = tokio::net::TcpListener::bind(&addr).await
+        .with_context(|| format!("Failed to bind to {}", addr))?;
+    
+    info!("🚀 Appliance listening on http://{}", addr);
+    info!("🛎️  Press Ctrl+C to terminate the appliance.");
+
+    axum::serve(listener, app)
+        .with_graceful_shutdown(async {
+            signal::ctrl_c().await.expect("failed to listen for event");
+            info!("🛑 Shutdown signal received. Shutting down gracefully...");
+        })
+        .await?;
 
     Ok(())
 }
