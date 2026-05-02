@@ -1,6 +1,9 @@
 use serde::Deserialize;
 use std::fs;
-use anyhow::Result;
+use std::path::Path;
+use anyhow::{Result, Context};
+
+const DEFAULT_RATES: &str = include_str!("../../rates.toml");
 
 #[derive(Deserialize)]
 struct RatesConfig {
@@ -20,8 +23,16 @@ pub struct CostAuditor {
 
 impl CostAuditor {
     pub fn new(path: &str) -> Result<Self> {
-        let content = fs::read_to_string(path)?;
-        let config: RatesConfig = toml::from_str(&content)?;
+        let content = if Path::new(path).exists() {
+            fs::read_to_string(path)
+                .with_context(|| format!("Failed to read rates file at {}", path))?
+        } else {
+            DEFAULT_RATES.to_string()
+        };
+
+        let config: RatesConfig = toml::from_str(&content)
+            .context("Failed to parse rates configuration")?;
+            
         Ok(Self { rates: config.rates })
     }
 

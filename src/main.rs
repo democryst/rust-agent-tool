@@ -15,6 +15,7 @@ use tokio::sync::mpsc;
 use tracing::{info, warn};
 use serde::{Deserialize, Serialize};
 use std::fs;
+use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 use clap::Parser;
 use tokio::signal;
@@ -73,26 +74,31 @@ async fn main() -> anyhow::Result<()> {
     // 0. Resolve Configuration
     let config: ApplianceConfig = if let Some(path) = args.config {
         info!("📖 Loading external config from: {:?}", path);
-        let content = fs::read_to_string(&path)?;
-        toml::from_str(&content)?
+        let content = fs::read_to_string(&path)
+            .with_context(|| format!("Failed to read external config at {:?}", path))?;
+        toml::from_str(&content).context("Failed to parse external config")?
     } else if Path::new("appliance.toml").exists() {
         info!("📖 Loading local appliance.toml...");
-        let content = fs::read_to_string("appliance.toml")?;
-        toml::from_str(&content)?
+        let content = fs::read_to_string("appliance.toml")
+            .context("Failed to read local appliance.toml")?;
+        toml::from_str(&content).context("Failed to parse local appliance.toml")?
     } else {
         info!("📦 Using embedded default configuration.");
-        toml::from_str(DEFAULT_CONFIG)?
+        toml::from_str(DEFAULT_CONFIG).context("Failed to parse embedded config")?
     };
 
     // 1. Setup Infrastructure
-    let embedder = Arc::new(FastEmbedder::new()?);
+    let embedder = Arc::new(FastEmbedder::new()
+        .context("Failed to initialize FastEmbedder")?);
     let vector_store = Arc::new(HnswStore::new(10000, 16, 200));
     let crypto = Arc::new(Sha2CryptoAdapter);
     let verifier = Arc::new(CargoVerifier);
     
     let model_file = format!("{}/gemma-4-e4b.gguf", config.models_path);
-    let llama = Arc::new(LlamaAdapter::new(&model_file)?);
-    let auditor = Arc::new(CostAuditor::new(&config.rates_path)?);
+    let llama = Arc::new(LlamaAdapter::new(&model_file)
+        .with_context(|| format!("Failed to load model file at {}. Did you run 'make download-model'?", model_file))?);
+    let auditor = Arc::new(CostAuditor::new(&config.rates_path)
+        .context("Failed to initialize CostAuditor")?);
 
     // 2. Setup Services
     let anchors = vec!["Rust".to_string(), "AI".to_string(), "Appliance".to_string(), "Gatekeeper".to_string()];
