@@ -1,0 +1,14 @@
+# Burn Rate Rates (USD per 1,000,000 Tokens)
+# Based on Claude 3.5 Sonnet (Flagship) and Local Compute Amortization (Gemma 4)
+
+[rates]
+# Blended Rate: $3.00 Input / $15.00 Output (Blended 1:1 estimate)
+flagship = 9.00
+
+# Local Compute: Amortization ($4k Mac / 3yr) + Electricity (~100W)
+# Calculation: $0.50 per 1M tokens at 50 tokens/sec throughput
+local = 0.50
+
+# Local Embedding (BGE-Small-EN-v1.5)
+# Negligible power; essentially free compared to inference
+embedding = 0.01

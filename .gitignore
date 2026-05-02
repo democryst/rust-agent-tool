@@ -1,0 +1,10 @@
+# Compiled binary
+/target
+
+# Large model files (optional to track, good to exclude)
+/models
+/knowledge
+
+# macOS specific
+.DS_Store
+.Trashes
